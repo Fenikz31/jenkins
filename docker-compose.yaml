@@ -1,0 +1,46 @@
+name: jenkins
+networks:
+  nginxproxymanager_softeam-net:
+    external: true
+services:
+  jenkins-blueocean:
+    build: .
+    container_name: jenkins-blueocean
+    environment:
+      DOCKER_CERT_PATH: /certs/client
+      DOCKER_HOST: tcp://docker:2376
+      DOCKER_TLS_VERIFY: 1
+    networks:
+      - nginxproxymanager_softeam-net
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - '8080:8080'
+      - '5000:5000'
+    privileged: true
+    restart: on-failure
+    volumes:
+      - jenkins-docker-certs:/certs/client:ro
+      - jenkins-data:/var/jenkins_home
+
+  jenkins-docker:
+    container_name: jenkins-docker
+    environment:
+      DOCKER_TLS_CERTDIR: /certs
+    image: docker:dind
+    networks:
+      nginxproxymanager_softeam-net:
+        aliases:
+          - docker
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - '2376:2376'
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - jenkins-docker-certs:/certs/client
+      - jenkins-data:/var/jenkins_home
+
+volumes:
+  jenkins-blueocean-certs:
+  jenkins-data:
+  jenkins-docker-certs:
